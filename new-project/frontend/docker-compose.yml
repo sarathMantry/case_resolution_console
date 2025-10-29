@@ -12,6 +12,10 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
+    command: >
+      sh -c "npm install --no-audit --no-fund &&
+             npm install -D tailwindcss postcss autoprefixer &&
+             npm run dev -- --host"
     networks:
       - app-network
 

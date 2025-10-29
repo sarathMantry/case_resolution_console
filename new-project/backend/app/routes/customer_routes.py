@@ -18,9 +18,13 @@ def get_customer(customer_id: str, db: Session = Depends(get_db)):
     return customer
 
 @router.get("/", response_model=None)
-def list_customers(db: Session = Depends(get_db)):
+def list_customers(
+    page: int = 1,
+    page_size: int = 20,
+    db: Session = Depends(get_db)
+):
     customer_service = CustomerService(db)
-    return customer_service.list_customers()
+    return customer_service.list_customers(page=page, page_size=page_size)
 
 @router.get("/{customer_id}/cases", response_model=None)
 def get_customer_cases(customer_id: str, db: Session = Depends(get_db)):
@@ -48,5 +52,18 @@ def update_customer_risk_level(
             customer_id=customer_id,
             risk_level=risk_level
         )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+@router.get("/{customer_id}/analytics", response_model=None)
+def get_customer_analytics(
+    customer_id: str,
+    days: int = 90,
+    db: Session = Depends(get_db)
+):
+    """Get comprehensive analytics for a customer including timeline, categories, merchants, and anomalies."""
+    customer_service = CustomerService(db)
+    try:
+        return customer_service.get_customer_analytics(customer_id=customer_id, days=days)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

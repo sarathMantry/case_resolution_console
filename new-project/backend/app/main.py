@@ -16,7 +16,9 @@ from .routes import (
     knowledge_routes,
     transaction_routes
 )
-from .utils.database import engine, Base
+from .routes import dashboard_routes
+from .utils.database import engine
+from .models.base import Base
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -47,10 +49,11 @@ async def metrics_middleware(request, call_next):
 
 
 # Include routers
-app.include_router(case_routes.router, tags=["cases"])
-app.include_router(customer_routes.router, tags=["customers"])
-app.include_router(knowledge_routes.router, tags=["knowledge"])
-app.include_router(transaction_routes.router, tags=["transactions"])
+app.include_router(case_routes.router, prefix="/api", tags=["cases"])
+app.include_router(customer_routes.router, prefix="/api", tags=["customers"])
+app.include_router(knowledge_routes.router, prefix="/api", tags=["knowledge"])
+app.include_router(transaction_routes.router, prefix="/api", tags=["transactions"])
+app.include_router(dashboard_routes.router, tags=["dashboard"])
 
 # Health check endpoints
 @app.get("/")

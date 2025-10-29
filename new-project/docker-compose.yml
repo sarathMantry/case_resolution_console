@@ -34,11 +34,21 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=root
       - DB_NAME=postgres
+    volumes:
+      - ./backend/app:/app/app
+      - ./db:/seed:ro
     depends_on:
       db:
         condition: service_healthy
     networks:
       - app-network
+    command: >
+      sh -c "
+      uvicorn app.main:app --host 0.0.0.0 --port 3000 --reload &
+      echo '⏳ Waiting a moment before seeding...' && sleep 8 &&
+      if [ -f /seed/run_seeder.py ]; then echo '🚀 Running KPI seeder...' && python /seed/run_seeder.py || echo '⚠️ Seeder failed (continuing)'; else echo 'ℹ️ No seeder found, skipping.'; fi &&
+      wait
+      "
 
   frontend:
     build:

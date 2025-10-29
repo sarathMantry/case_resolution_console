@@ -1,0 +1,167 @@
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { Card } from '../components/common/Card';
+
+interface Transaction {
+  id: string;
+  merchant: string;
+  amount_cents: number;
+  currency: string;
+  ts: string;
+  mcc: string;
+  city: string;
+  country: string;
+  card_id: string;
+  customer_id: string;
+  device_id?: string;
+}
+
+interface CategorySpend {
+  name: string;
+  amount: number;
+  percentage: number;
+}
+
+const TransactionTimeline: React.FC<{ transactions: Transaction[] }> = ({ transactions }) => (
+  <Card className="p-6">
+    <h3 className="text-lg font-medium text-gray-900 mb-4">Transaction Timeline</h3>
+    <div className="h-64">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={transactions}>
+          <XAxis dataKey="timestamp" />
+          <YAxis />
+          <Tooltip />
+          <Area type="monotone" dataKey="amount" stroke="#3B82F6" fill="#93C5FD" />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  </Card>
+);
+
+const CategoryBreakdown: React.FC<{ categories: CategorySpend[] }> = ({ categories }) => (
+  <Card className="p-6">
+    <h3 className="text-lg font-medium text-gray-900 mb-4">Category Spend</h3>
+    <div className="space-y-4">
+      {categories.map(category => (
+        <div key={category.name}>
+          <div className="flex justify-between text-sm text-gray-600 mb-1">
+            <span>{category.name}</span>
+            <span>{category.percentage}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-blue-600 rounded-full h-2"
+              style={{ width: `${category.percentage}%` }}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  </Card>
+);
+
+const MerchantMix: React.FC<{ merchants: { name: string; total: number }[] }> = ({ merchants }) => (
+  <Card className="p-6">
+    <h3 className="text-lg font-medium text-gray-900 mb-4">Top Merchants</h3>
+    <div className="divide-y divide-gray-200">
+      {merchants.map(merchant => (
+        <div key={merchant.name} className="py-3 flex justify-between">
+          <span className="text-sm text-gray-600">{merchant.name}</span>
+          <span className="text-sm font-medium text-gray-900">
+            ${merchant.total.toLocaleString()}
+          </span>
+        </div>
+      ))}
+    </div>
+  </Card>
+);
+
+const AnomalyIndicator: React.FC<{ anomalies: { date: string; description: string }[] }> = ({ 
+  anomalies 
+}) => (
+  <Card className="p-6">
+    <h3 className="text-lg font-medium text-gray-900 mb-4">Detected Anomalies</h3>
+    <div className="space-y-4">
+      {anomalies.map((anomaly, index) => (
+        <div
+          key={index}
+          className="flex items-start space-x-3 text-sm"
+        >
+          <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-red-500" />
+          <div>
+            <p className="font-medium text-gray-900">{anomaly.date}</p>
+            <p className="text-gray-500">{anomaly.description}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </Card>
+);
+
+export const CustomerPage: React.FC = () => {
+  const { id: customerId } = useParams<{ id: string }>();
+  
+  // Mock data - replace with actual API calls
+  const transactions = React.useMemo(() => 
+    Array.from({ length: 30 }, (_, i) => ({
+      id: `txn-${i}`,
+      merchant: `Merchant ${i}`,
+      amount: Math.random() * 1000,
+      currency: 'USD',
+      timestamp: new Date(Date.now() - i * 86400000).toISOString(),
+      category: ['Retail', 'Travel', 'Food', 'Entertainment'][Math.floor(Math.random() * 4)]
+    })), []);
+
+  const categories = React.useMemo(() => [
+    { name: 'Retail', amount: 2500, percentage: 40 },
+    { name: 'Travel', amount: 1500, percentage: 25 },
+    { name: 'Food', amount: 1200, percentage: 20 },
+    { name: 'Entertainment', amount: 800, percentage: 15 }
+  ], []);
+
+  const merchants = React.useMemo(() => [
+    { name: 'Amazon', total: 1200 },
+    { name: 'Walmart', total: 850 },
+    { name: 'Target', total: 645 },
+    { name: 'Best Buy', total: 430 },
+    { name: 'Costco', total: 380 }
+  ], []);
+
+  const anomalies = React.useMemo(() => [
+    {
+      date: '2023-10-28',
+      description: 'Unusual high-value transaction at new merchant'
+    },
+    {
+      date: '2023-10-25',
+      description: 'Multiple transactions in quick succession'
+    }
+  ], []);
+
+  return (
+    <div className="p-6 max-w-7xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          Customer Profile: {customerId}
+        </h1>
+        <p className="text-gray-500">
+          Transaction history and spending patterns analysis
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Column */}
+        <div className="space-y-6">
+          <TransactionTimeline transactions={transactions} />
+          <CategoryBreakdown categories={categories} />
+        </div>
+
+        {/* Right Column */}
+        <div className="space-y-6">
+          <MerchantMix merchants={merchants} />
+          <AnomalyIndicator anomalies={anomalies} />
+        </div>
+      </div>
+    </div>
+  );
+};
