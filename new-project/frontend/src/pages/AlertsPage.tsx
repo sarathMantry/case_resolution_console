@@ -1,78 +1,129 @@
 import React from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import { TriageDrawer } from '../components/TriageDrawer';
 
 interface AlertItem {
   id: string;
-  customerId: string;
-  riskScore: number;
   status: string;
-  createdAt: string;
-  description: string;
+  risk: string;
+  created_at: string;
+  suspect_txn_id: string | null;
+  customer_id: string;
 }
 
 const AlertRow: React.FC<{ alert: AlertItem; onOpenTriage: (id: string) => void }> = ({ 
   alert, 
   onOpenTriage 
-}) => (
-  <div className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors duration-150">
-    <div className="flex-1">
-      <div className="flex items-center space-x-4">
-        <div className={`
-          w-2 h-2 rounded-full
-          ${alert.riskScore >= 0.7 ? 'bg-red-500' : 
-            alert.riskScore >= 0.4 ? 'bg-yellow-500' : 'bg-green-500'}
-        `} />
-        <div>
-          <p className="text-sm font-medium text-gray-900">
-            Customer #{alert.customerId}
-          </p>
-          <p className="text-sm text-gray-500">
-            {alert.description}
-          </p>
+}) => {
+  const getRiskColor = (risk: string) => {
+    switch (risk?.toUpperCase()) {
+      case 'HIGH':
+        return 'bg-red-500';
+      case 'MEDIUM':
+        return 'bg-orange-500';
+      case 'LOW':
+        return 'bg-yellow-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status?.toUpperCase()) {
+      case 'OPEN':
+        return 'bg-blue-100 text-blue-800';
+      case 'IN_REVIEW':
+        return 'bg-purple-100 text-purple-800';
+      case 'CLOSED':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors duration-150 border-b border-gray-100">
+      <div className="flex-1">
+        <div className="flex items-center space-x-4">
+          <div className={`w-2 h-2 rounded-full ${getRiskColor(alert.risk)}`} />
+          <div>
+            <p className="text-sm font-medium text-gray-900">
+              Alert ID: {alert.id.substring(0, 8)}...
+            </p>
+            <p className="text-xs text-gray-500">
+              Customer: {alert.customer_id.substring(0, 8)}... • Risk: {alert.risk}
+            </p>
+          </div>
         </div>
       </div>
-    </div>
-    <div className="flex items-center space-x-4">
-      <div className="text-sm text-gray-500">
-        Risk Score: {(alert.riskScore * 100).toFixed(0)}%
+      <div className="flex items-center space-x-4">
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(alert.status)}`}>
+          {alert.status.replace('_', ' ')}
+        </span>
+        <span className="text-xs text-gray-500">{new Date(alert.created_at).toLocaleDateString()}</span>
+        <button
+          onClick={() => onOpenTriage(alert.id)}
+          className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 
+                     font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none 
+                     focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          Triage →
+        </button>
       </div>
-      <button
-        onClick={() => onOpenTriage(alert.id)}
-        className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 
-                   font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none 
-                   focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-      >
-        Open Triage
-      </button>
     </div>
-  </div>
-);
+  );
+};
 
 export const AlertsPage: React.FC = () => {
-  const [alerts] = React.useState<AlertItem[]>(() => 
-    Array.from({ length: 1000 }, (_, i) => ({
-      id: `alert-${i}`,
-      customerId: `CUST-${Math.floor(Math.random() * 10000)}`,
-      riskScore: Math.random(),
-      status: Math.random() > 0.5 ? 'NEW' : 'IN_PROGRESS',
-      createdAt: new Date(Date.now() - Math.random() * 86400000 * 30).toISOString(),
-      description: 'Suspicious transaction pattern detected'
-    }))
-  );
+  const [alerts, setAlerts] = React.useState<AlertItem[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [selectedAlertId, setSelectedAlertId] = React.useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [statusFilter, setStatusFilter] = React.useState<string>('ALL');
+  const [severityFilter, setSeverityFilter] = React.useState<string>('ALL');
 
-  const parentRef = React.useRef<HTMLDivElement>(null);
-  
-  const virtualizer = useVirtualizer({
-    count: alerts.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 82, // Approximate height of each row
-    overscan: 5
-  });
+  React.useEffect(() => {
+    fetchAlerts();
+  }, []);
+
+  const fetchAlerts = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost:3000/api/alerts');
+      if (!response.ok) throw new Error('Failed to fetch alerts');
+      const data = await response.json();
+      setAlerts(data);
+    } catch (error) {
+      console.error('Error fetching alerts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleOpenTriage = (alertId: string) => {
-    console.log('Opening triage for alert:', alertId);
-    // TODO: Implement triage drawer opening logic
+    setSelectedAlertId(alertId);
+    setDrawerOpen(true);
   };
+
+  const handleCloseDrawer = () => {
+    setDrawerOpen(false);
+    setSelectedAlertId(null);
+    // Refresh alerts after drawer closes
+    fetchAlerts();
+  };
+
+  const filteredAlerts = alerts.filter(alert => {
+    if (statusFilter !== 'ALL' && alert.status !== statusFilter) return false;
+    if (severityFilter !== 'ALL' && alert.risk !== severityFilter) return false;
+    return true;
+  });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -83,62 +134,80 @@ export const AlertsPage: React.FC = () => {
 
       {/* Filters */}
       <div className="mb-6 flex items-center space-x-4">
-        <select className="block w-48 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none 
-                          focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
-          <option>All Risk Levels</option>
-          <option>High Risk</option>
-          <option>Medium Risk</option>
-          <option>Low Risk</option>
+        <select 
+          value={severityFilter}
+          onChange={(e) => setSeverityFilter(e.target.value)}
+          className="block w-48 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none 
+                    focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border"
+        >
+          <option value="ALL">All Severities</option>
+          <option value="HIGH">High</option>
+          <option value="MEDIUM">Medium</option>
+          <option value="LOW">Low</option>
         </select>
 
-        <select className="block w-48 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none 
-                          focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
-          <option>All Status</option>
-          <option>New</option>
-          <option>In Progress</option>
-          <option>Resolved</option>
+        <select 
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="block w-48 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none 
+                    focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border"
+        >
+          <option value="ALL">All Status</option>
+          <option value="OPEN">Open</option>
+          <option value="IN_REVIEW">In Review</option>
+          <option value="CLOSED">Closed</option>
         </select>
 
         <div className="flex-1" />
 
+        <button
+          onClick={fetchAlerts}
+          className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+        >
+          Refresh
+        </button>
+
         <div className="text-sm text-gray-500">
-          Showing {alerts.length} alerts
+          Showing {filteredAlerts.length} of {alerts.length} alerts
         </div>
       </div>
 
-      {/* Virtualized Alert List */}
-      <div
-        ref={parentRef}
-        className="border border-gray-200 rounded-lg shadow bg-white overflow-auto"
-        style={{ height: 'calc(100vh - 250px)' }}
-      >
-        <div
-          style={{
-            height: `${virtualizer.getTotalSize()}px`,
-            width: '100%',
-            position: 'relative'
-          }}
-        >
-          {virtualizer.getVirtualItems().map((virtualRow) => (
-            <div
-              key={virtualRow.index}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: `${virtualRow.size}px`,
-                transform: `translateY(${virtualRow.start}px)`
-              }}
-            >
-              <AlertRow
-                alert={alerts[virtualRow.index]}
-                onOpenTriage={handleOpenTriage}
-              />
-            </div>
+      {/* Alert List */}
+      {filteredAlerts.length === 0 ? (
+        <div className="border border-gray-200 rounded-lg shadow bg-white p-12 text-center">
+          <svg
+            className="mx-auto h-12 w-12 text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">No alerts found</h3>
+          <p className="mt-1 text-sm text-gray-500">Try adjusting your filters</p>
+        </div>
+      ) : (
+        <div className="border border-gray-200 rounded-lg shadow bg-white overflow-auto">
+          {filteredAlerts.map((alert) => (
+            <AlertRow
+              key={alert.id}
+              alert={alert}
+              onOpenTriage={handleOpenTriage}
+            />
           ))}
         </div>
-      </div>
+      )}
+
+      <TriageDrawer
+        isOpen={drawerOpen}
+        onClose={handleCloseDrawer}
+        alertId={selectedAlertId}
+      />
     </div>
   );
 };

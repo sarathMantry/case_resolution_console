@@ -6,17 +6,30 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 # Use package-relative imports to reference model modules within the app package
 from ..models import Customer, Case, Transaction, Alert
+from ..utils.logger import setup_logging, log_service_call
+
+# Set up logger for customer service
+logger = setup_logging(__name__)
+
 
 class CustomerService:
     def __init__(self, db: Session):
         self.db = db
+        logger.debug("CustomerService initialized")
     
+    @log_service_call(logger)
     def get_customer(self, customer_id: str) -> Optional[Customer]:
         """Get a customer by ID."""
-        return self.db.query(Customer).filter(Customer.id == customer_id).first()
+        logger.info(f"Fetching customer: {customer_id}")
+        customer = self.db.query(Customer).filter(Customer.id == customer_id).first()
+        if not customer:
+            logger.warning(f"Customer not found: {customer_id}")
+        return customer
     
+    @log_service_call(logger)
     def list_customers(self, page: int = 1, page_size: int = 20) -> Dict[str, Any]:
         """List customers with pagination."""
+        logger.info(f"Listing customers - page: {page}, page_size: {page_size}")
         offset = (page - 1) * page_size
         
         # Get total count
