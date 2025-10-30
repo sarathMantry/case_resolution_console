@@ -1,0 +1,92 @@
+[
+  {
+    "id": "kb001",
+    "title": "High Velocity Transactions",
+    "category": "fraud_detection",
+    "content": "Multiple transactions within a short time period (5+ in 1 hour) indicates potential card testing or account takeover. This pattern is commonly seen when fraudsters test stolen card credentials with small purchases before attempting larger transactions.",
+    "tags": ["velocity", "fraud", "card_testing", "account_takeover"],
+    "anchor": "#velocity-fraud",
+    "relevance_score": 0.95
+  },
+  {
+    "id": "kb002",
+    "title": "Device Fingerprint Changes",
+    "category": "fraud_detection",
+    "content": "Sudden changes in device fingerprints, especially multiple devices in short succession, suggest compromised credentials. Legitimate users typically use 1-2 devices consistently.",
+    "tags": ["device", "account_takeover", "fraud", "fingerprint"],
+    "anchor": "#device-fraud",
+    "relevance_score": 0.90
+  },
+  {
+    "id": "kb003",
+    "title": "MCC Risk Categories",
+    "category": "merchant_categories",
+    "content": "High-risk MCCs include 5967 (teleservices), 7995 (gambling), 5966 (outbound marketing), 7273 (dating services). These categories have historically higher fraud rates and require additional scrutiny.",
+    "tags": ["mcc", "risk", "categories", "merchant"],
+    "anchor": "#mcc-risk",
+    "relevance_score": 0.85
+  },
+  {
+    "id": "kb004",
+    "title": "Chargeback Patterns",
+    "category": "disputes",
+    "content": "Customers with 2+ chargebacks in 6 months have 60% probability of future disputes. Enhanced monitoring recommended. Common chargeback reasons include unauthorized transactions, service not rendered, and product not received.",
+    "tags": ["chargeback", "dispute", "patterns", "history"],
+    "anchor": "#chargeback-patterns",
+    "relevance_score": 0.88
+  },
+  {
+    "id": "kb005",
+    "title": "International Transaction Flags",
+    "category": "fraud_detection",
+    "content": "International transactions, especially to high-risk countries, require verification. Impossible travel detection is key - transactions in different countries within physically impossible timeframes indicate fraud.",
+    "tags": ["international", "travel", "location", "geographic"],
+    "anchor": "#international-fraud",
+    "relevance_score": 0.82
+  },
+  {
+    "id": "kb006",
+    "title": "Card Freeze Guidelines",
+    "category": "actions",
+    "content": "Freeze card immediately for risk scores >80 (critical), open dispute for 60-80 (high risk), contact customer for 40-60 (medium risk), monitor for <40 (low risk).",
+    "tags": ["freeze", "action", "response", "guidelines"],
+    "anchor": "#freeze-guidelines",
+    "relevance_score": 0.90
+  },
+  {
+    "id": "kb007",
+    "title": "False Positive Indicators",
+    "category": "fraud_detection",
+    "content": "Travel bookings, large purchases at known merchants, recurring subscriptions, and first-time large purchases often trigger false positives. Context matters - check merchant reputation and transaction history.",
+    "tags": ["false_positive", "legitimate", "patterns", "context"],
+    "anchor": "#false-positives",
+    "relevance_score": 0.75
+  },
+  {
+    "id": "kb008",
+    "title": "OTP Verification Requirements",
+    "category": "compliance",
+    "content": "Transactions >$500 or international transactions require OTP verification per PSD2/SCA requirements. Strong Customer Authentication (SCA) is mandatory in EU and recommended globally.",
+    "tags": ["otp", "verification", "compliance", "psd2", "sca"],
+    "anchor": "#otp-requirements",
+    "relevance_score": 0.92
+  },
+  {
+    "id": "kb009",
+    "title": "Amount Anomaly Detection",
+    "category": "fraud_detection",
+    "content": "Transactions 3x or more above customer's average spending are flagged. Consider transaction type and merchant category. Large purchases at luxury retailers may be legitimate during holidays.",
+    "tags": ["amount", "anomaly", "spending", "patterns"],
+    "anchor": "#amount-anomaly",
+    "relevance_score": 0.87
+  },
+  {
+    "id": "kb010",
+    "title": "Time-based Risk Factors",
+    "category": "fraud_detection",
+    "content": "Transactions between midnight and 5 AM have 40% higher fraud rates. Weekend and holiday transactions also show elevated risk. Combine with other signals for accurate assessment.",
+    "tags": ["time", "temporal", "risk", "patterns"],
+    "anchor": "#temporal-risk",
+    "relevance_score": 0.78
+  }
+]

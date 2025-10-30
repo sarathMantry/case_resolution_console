@@ -24,7 +24,8 @@ from .routes import (
     customer_routes,
     knowledge_routes,
     transaction_routes,
-    triage_routes
+    triage_routes,
+    agent_routes
 )
 from .routes import dashboard_routes
 from .utils.database import engine
@@ -37,6 +38,7 @@ from .utils.metrics import (
     http_requests_in_progress,
     rate_limit_exceeded_total
 )
+from .cron_scheduler import start_scheduler, stop_scheduler
 
 # Set up logger
 logger = setup_logging(__name__)
@@ -110,6 +112,7 @@ app.include_router(customer_routes.router, prefix="/api", tags=["customers"])
 app.include_router(knowledge_routes.router, prefix="/api", tags=["knowledge"])
 app.include_router(transaction_routes.router, prefix="/api", tags=["transactions"])
 app.include_router(triage_routes.router, prefix="/api", tags=["triage"])
+app.include_router(agent_routes.router, prefix="/api", tags=["agents"])
 app.include_router(dashboard_routes.router, tags=["dashboard"])
 
 # Health check endpoints
@@ -137,3 +140,27 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Startup and shutdown events
+@app.on_event("startup")
+async def startup_event():
+    """Start background services on application startup."""
+    logger.info("Starting background services...")
+    
+    # Start cron scheduler for automated alert generation
+    try:
+        start_scheduler()
+        logger.info("✅ Alert cron scheduler started")
+    except Exception as e:
+        logger.error(f"Failed to start cron scheduler: {e}")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Stop background services on application shutdown."""
+    logger.info("Stopping background services...")
+    
+    try:
+        stop_scheduler()
+        logger.info("✅ Alert cron scheduler stopped")
+    except Exception as e:
+        logger.error(f"Failed to stop cron scheduler: {e}")

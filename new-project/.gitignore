@@ -1,0 +1,16 @@
+# Ignore local environment files and secrets
+.env
+*.env
+backend/.env
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.build/
+.eggs/
+*.egg-info/
+
+# Node artifacts
+node_modules/
